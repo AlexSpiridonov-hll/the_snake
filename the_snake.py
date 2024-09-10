@@ -81,10 +81,8 @@ class Snake(GameObject):
         """Обновляет позицию змейки на игровом поле"""
         head_x, head_y = self.get_head_position()
         move_x, move_y = self.direction
-        head_x = head_x % SCREEN_WIDTH
-        head_y = head_y % SCREEN_HEIGHT
-        new_head = (head_x + (move_x * GRID_SIZE),
-                    head_y + (move_y * GRID_SIZE))
+        new_head = ((head_x + (move_x * GRID_SIZE)) % SCREEN_WIDTH,
+                    (head_y + (move_y * GRID_SIZE)) % SCREEN_HEIGHT)
         self.positions.insert(0, new_head)
         self.last = self.positions[-1]
         if len(self.positions) > self.length:
