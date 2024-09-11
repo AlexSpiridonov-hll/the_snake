@@ -107,7 +107,6 @@ class Snake(GameObject):
         self.positions = [CENTER_BOARD]
         self.length = 1
         self.direction = choice([RIGHT, LEFT, UP, DOWN])
-        self.next_direction = None
         self.last = None
 
 
