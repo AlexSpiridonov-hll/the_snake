@@ -32,7 +32,7 @@ class GameObject:
         """Это абстрактный метод"""
         pass
 
-    def draw_cells(self):
+    def draw_cell(self):
         """Метод отрисовывает ячейку"""
         rect = (pygame.Rect(self.position, (GRID_SIZE, GRID_SIZE)))
         pygame.draw.rect(screen, self.body_color, rect)
@@ -47,11 +47,10 @@ class Apple(GameObject):
     def __init__(self):
         super().__init__()
         self.body_color = APPLE_COLOR
-        self.position = self.randomize_position()
+        self.position = self.randomize_position(self.position)
 
-    def randomize_position(self):
+    def randomize_position(self, old_position):
         """Устанавливает случайное положение яблока на игровом поле."""
-        old_position = self.position
         while self.position == old_position:
             self.position = (randint(0, GRID_WIDTH - 1) * GRID_SIZE,
                              randint(0, GRID_HEIGHT - 1) * GRID_SIZE)
@@ -59,7 +58,7 @@ class Apple(GameObject):
 
     def draw(self):
         """Отрисовывает яблоко на игровом поле."""
-        super().draw_cells()
+        super().draw_cell()
 
 
 class Snake(GameObject):
@@ -71,11 +70,10 @@ class Snake(GameObject):
         super().__init__()
         self.reset()
 
-    def update_direction(self):
+    def update_direction(self, direction):
         """Метод обновления направления после нажатия на кнопку"""
-        if self.next_direction:
-            self.direction = self.next_direction
-            self.next_direction = None
+        if self.direction[0] + direction[0] != 0:
+            self.direction = direction
 
     def move(self):
         """Обновляет позицию змейки на игровом поле"""
@@ -116,10 +114,10 @@ class Snake(GameObject):
 def handle_keys(game_object):
     """Обрабатывает нажатие клавиш"""
     pygame_keys = {
-        (pygame.K_UP, UP): DOWN,
-        (pygame.K_DOWN, DOWN): UP,
-        (pygame.K_LEFT, LEFT): RIGHT,
-        (pygame.K_RIGHT, RIGHT): LEFT
+        pygame.K_UP: UP,
+        pygame.K_DOWN: DOWN,
+        pygame.K_LEFT: LEFT,
+        pygame.K_RIGHT: RIGHT
     }
     global SPEED
     for event in pygame.event.get():
@@ -127,9 +125,8 @@ def handle_keys(game_object):
             pygame.quit()
             raise SystemExit
         elif event.type == pygame.KEYDOWN:
-            for key, value in pygame_keys.items():
-                if event.key == key[0] and game_object.direction != value:
-                    game_object.next_direction = key[1]
+            if event.key in pygame_keys:
+                game_object.update_direction(pygame_keys[event.key])
             if event.key == pygame.K_ESCAPE:
                 pygame.quit()
                 raise SystemExit
@@ -147,19 +144,17 @@ def main():
     while True:
         clock.tick(SPEED)
         handle_keys(snake)
-        snake.update_direction()
         snake.draw()
         apple.draw()
         snake.move()
         if snake.positions[0] == apple.position:
             snake.length += 1
             while apple.position in snake.positions:
-                apple.randomize_position()
+                apple.randomize_position(apple.position)
             apple.draw()
         if snake.positions[0] in snake.positions[1:]:
             snake.reset()
-            apple.randomize_position()
-            apple.draw()
+            apple.randomize_position(apple.position)
         pygame.display.update()
 
 
