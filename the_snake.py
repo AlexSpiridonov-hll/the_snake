@@ -49,9 +49,9 @@ class Apple(GameObject):
         self.body_color = APPLE_COLOR
         self.position = self.randomize_position(self.position)
 
-    def randomize_position(self, old_position):
+    def randomize_position(self, old_position, snake_position=CENTER_BOARD):
         """Устанавливает случайное положение яблока на игровом поле."""
-        while self.position == old_position:
+        while self.position in snake_position or self.position == old_position:
             self.position = (randint(0, GRID_WIDTH - 1) * GRID_SIZE,
                              randint(0, GRID_HEIGHT - 1) * GRID_SIZE)
         return self.position
@@ -72,8 +72,7 @@ class Snake(GameObject):
 
     def update_direction(self, direction):
         """Метод обновления направления после нажатия на кнопку"""
-        if self.direction[0] + direction[0] != 0:
-            self.direction = direction
+        self.direction = direction
 
     def move(self):
         """Обновляет позицию змейки на игровом поле"""
@@ -113,10 +112,14 @@ class Snake(GameObject):
 def handle_keys(game_object):
     """Обрабатывает нажатие клавиш"""
     pygame_keys = {
-        pygame.K_UP: UP,
-        pygame.K_DOWN: DOWN,
-        pygame.K_LEFT: LEFT,
-        pygame.K_RIGHT: RIGHT
+        (pygame.K_UP, LEFT): UP,
+        (pygame.K_DOWN, LEFT): DOWN,
+        (pygame.K_LEFT, UP): LEFT,
+        (pygame.K_RIGHT, UP): RIGHT,
+        (pygame.K_UP, RIGHT): UP,
+        (pygame.K_DOWN, RIGHT): DOWN,
+        (pygame.K_LEFT, DOWN): LEFT,
+        (pygame.K_RIGHT, DOWN): RIGHT
     }
     global SPEED
     for event in pygame.event.get():
@@ -124,13 +127,15 @@ def handle_keys(game_object):
             pygame.quit()
             raise SystemExit
         elif event.type == pygame.KEYDOWN:
-            if event.key in pygame_keys:
-                game_object.update_direction(pygame_keys[event.key])
-            if event.key == pygame.K_ESCAPE:
+            if (event.key, game_object.direction) in pygame_keys:
+                game_object.update_direction(
+                    pygame_keys[(event.key, game_object.direction)]
+                )
+            elif event.key == pygame.K_ESCAPE:
                 pygame.quit()
                 raise SystemExit
             elif event.key == pygame.K_MINUS:
-                SPEED -= 1
+                SPEED = max(SPEED - 1, 1)
             elif event.key == pygame.K_EQUALS:
                 SPEED += 1
 
@@ -148,12 +153,11 @@ def main():
         snake.move()
         if snake.positions[0] == apple.position:
             snake.length += 1
-            while apple.position in snake.positions:
-                apple.randomize_position(apple.position)
+            apple.randomize_position(apple.position, snake.positions)
             apple.draw()
-        if snake.positions[0] in snake.positions[1:]:
+        elif snake.positions[0] in snake.positions[1:]:
             snake.reset()
-            apple.randomize_position(apple.position)
+            apple.randomize_position(apple.position, snake.positions)
         pygame.display.update()
 
 
